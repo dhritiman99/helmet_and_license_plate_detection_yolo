@@ -13,7 +13,7 @@ violations = st.Page(
 )
 
 st.logo('static/logo.jpg')
-st.sidebar.text('created by d7n')
+st.sidebar.text('Helmet, License Plate Detection')
 
 page = st.navigation(pages=[home, violations])
 page.run()
