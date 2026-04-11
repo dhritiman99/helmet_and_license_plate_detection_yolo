@@ -2,13 +2,13 @@
 import streamlit as st 
 from utils.image import buffer_to_img
 
-def show_violations(violations: list):
-    st.title('Detected Violations')
+def show_violations(violations: dict, img_channel="BGR"):
 
-    for violation in violations:
+    st.title('Detected Violations')
+    for violation_id in violations:
         with st.container(height=300):
             c1, c2 = st.columns(2)
             with c1:
-                st.image(buffer_to_img(violation['rider_img']), channels="BGR", use_container_width=True)
+                st.image(buffer_to_img(violations[violation_id]['rider_img']), channels=img_channel, use_container_width=True)
             with c2:
-                st.image(buffer_to_img(violation['plate_img']), channels="BGR", )
+                st.image(buffer_to_img(violations[violation_id]['plate_img']), channels=img_channel, width=500)

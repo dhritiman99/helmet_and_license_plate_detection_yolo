@@ -1,6 +1,11 @@
 import streamlit as st
-from components.camera import camera
 
-st.text("Detect Riders without Helmets")
+from components.detector import detector
 
-camera()
+
+
+st.title("Detect Riders without Helmets")
+
+
+
+detector()
