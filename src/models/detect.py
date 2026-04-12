@@ -49,12 +49,14 @@ def is_inside(inner_box, outer_box):
     return (outer_box[0] <= cx <= outer_box[2]) and (outer_box[1] <= cy <= outer_box[3])
 
 
-def annotate_image(frame, detections, violations=None):
+def annotate_image(frame, detections, violations=None, roi_x1=0, roi_y1=0, roi_x2=0, roi_y2=0):
 
     if violations is None:
         violations = {}
 
     sv_detections = sv.Detections.from_ultralytics(detections)
+    if len(sv_detections.xyxy) > 0:
+        sv_detections.xyxy += np.array([roi_x1, roi_y1, roi_x1, roi_y1])
 
     keep_mask = np.array([class_id != ID_PLATE for class_id in sv_detections.class_id])
 
@@ -142,6 +144,12 @@ def annotate_image(frame, detections, violations=None):
     ]
 
     annotated_frame = frame.copy()
+    cv2.rectangle(
+        annotated_frame,
+        (roi_x1,roi_y1),(roi_x2, roi_y2),
+        (255,0,0),
+        2
+    )
     annotated_frame = box_annotator.annotate(scene=annotated_frame, detections=sv_detections)
     annotated_frame = label_annotator.annotate(
         scene=annotated_frame,

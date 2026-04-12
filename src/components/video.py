@@ -1,15 +1,16 @@
 import streamlit as st
 import tempfile
 import cv2
-
+from streamlit_drawable_canvas import st_canvas
 from models.detect import annotate_image
 from components.violations import show_violations
 from models.loader import load_models
-
+from PIL import Image
 
 def process_video(uploaded_file):
+    if "roi_coords" not in st.session_state:
+        st.session_state.roi_coords = None
 
-    st.title("🎥 Video Tracking System")
 
     # Load model once per run (no session_state)
     model = load_models()
@@ -41,21 +42,30 @@ def process_video(uploaded_file):
         stop = st.button("⏹ Stop Video")
     with c3:
         if st.button("🔄 Reset"):
+            st.session_state.clear()
             st.rerun()
+    
 
-    frame_placeholder = st.empty()
-    violation_placeholder = st.empty()
 
     violations = {}
+    frame_placeholder = st.empty()
+    violation_placeholder = st.empty()
+    
+    cap = cv2.VideoCapture(video_path)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    
+    if st.session_state.roi_coords is None:
+        select_roi(cap)
+        return 
+
+    x1, y1, x2, y2 = st.session_state.roi_coords
+
+    
 
     # -----------------------------
     # VIDEO PROCESSING
     # -----------------------------
     if run:
-
-        cap = cv2.VideoCapture(video_path)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-
         while cap.isOpened():
 
             if stop:
@@ -67,11 +77,12 @@ def process_video(uploaded_file):
 
             frame = cv2.resize(frame, (1280, 720))
 
+
             # -----------------------------
             # TRACKING (ByteTrack)
             # -----------------------------
             results = model.track(
-                frame,
+                frame[y1:y2, x1:x2],
                 persist=True,
                 conf=conf_filter,
                 classes=[0, 1, 2, 3],
@@ -86,7 +97,8 @@ def process_video(uploaded_file):
             annotated_frame, violations = annotate_image(
                 frame,
                 detections,
-                violations
+                violations,
+                roi_x1=x1, roi_y1=y1, roi_x2=x2, roi_y2=y2
             )
 
 
@@ -98,6 +110,8 @@ def process_video(uploaded_file):
                 annotated_frame,
                 channels="RGB"
             )
+            
+
             if violations:
                 with violation_placeholder.container():
                     show_violations(violations, "RGB")
@@ -106,6 +120,47 @@ def process_video(uploaded_file):
     
 
 
-    # -----------------------------
-    # RESET (simple local reset)
-    # -----------------------------
+def select_roi(cap):
+    # 1. Get a sample frame for the preview
+    ret, frame = cap.read()
+    frame = cv2.resize(frame, (1280,720))
+    if not ret:
+        st.error("Failed to load video preview.")
+        return None
+    
+    # Get video dimensions
+    height, width, _ = frame.shape
+    
+    st.subheader("📐 Adjust Detection Zone")
+    
+    # 2. Create Two Columns for Sliders
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        x_range = st.slider("Horizontal Range (X)", 1, width, (0, width // 2))
+        y_range = st.slider("Vertical Range (Y)", 1, height, (height // 2, height))
+        
+    confirm = st.button("✅ Confirm")
+
+    # 3. Extract coordinates
+    x1, x2 = x_range
+    y1, y2 = y_range
+
+    # 4. Live Preview
+    # Draw the rectangle on a copy of the frame
+    preview_frame = frame.copy()
+    cv2.rectangle(preview_frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
+    
+    # Label the ROI
+    cv2.putText(preview_frame, "DETECTION ZONE", (x1 + 10, y1 + 35), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+
+    st.image(cv2.cvtColor(preview_frame, cv2.COLOR_BGR2RGB),)
+
+    if confirm:
+        st.session_state.roi_coords = (x1, y1, x2, y2)
+        st.rerun()
+
+    return None
+
+
