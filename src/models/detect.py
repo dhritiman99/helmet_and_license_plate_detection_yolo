@@ -109,22 +109,16 @@ def annotate_image(frame, detections, violations=None, roi_x1=0, roi_y1=0, roi_x
         rider_crop = crop_image(frame, rider_box)
         plate_crop = crop_image(frame, sv_detections.xyxy[best_plate_idx])
 
-        
-
-
         if riders.tracker_id is not None:
             tracker_id = riders.tracker_id[r_idx]
 
-        
-
-        
-
-        if int(tracker_id) not in violations or violations[int(tracker_id)]['conf'] < conf:
-            violations[int(tracker_id)] = {
-                "rider_img": img_to_buffer(cv2.cvtColor(rider_crop, cv2.COLOR_BGR2RGB)),
-                "plate_img": img_to_buffer(cv2.cvtColor(plate_crop, cv2.COLOR_BGR2RGB)),
-                "conf": conf
-            }
+        if riders.tracker_id is not None:
+            if int(tracker_id) not in violations or violations[int(tracker_id)]['conf'] < conf:
+                violations[int(tracker_id)] = {
+                    "rider_img": img_to_buffer(cv2.cvtColor(rider_crop, cv2.COLOR_BGR2RGB)),
+                    "plate_img": img_to_buffer(cv2.cvtColor(plate_crop, cv2.COLOR_BGR2RGB)),
+                    "conf": conf
+                }
 
     # filter detections
     sv_detections = sv_detections[keep_mask]

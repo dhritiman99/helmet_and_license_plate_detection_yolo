@@ -46,7 +46,6 @@ def process_video(uploaded_file):
             st.rerun()
     
 
-
     violations = {}
     frame_placeholder = st.empty()
     violation_placeholder = st.empty()
@@ -59,9 +58,6 @@ def process_video(uploaded_file):
         return 
 
     x1, y1, x2, y2 = st.session_state.roi_coords
-
-    
-
     # -----------------------------
     # VIDEO PROCESSING
     # -----------------------------
@@ -75,9 +71,7 @@ def process_video(uploaded_file):
             if not ret:
                 break
 
-            frame = cv2.resize(frame, (1280, 720))
-
-
+            #frame = cv2.resize(frame, (1280, 720))
             # -----------------------------
             # TRACKING (ByteTrack)
             # -----------------------------
@@ -100,9 +94,6 @@ def process_video(uploaded_file):
                 violations,
                 roi_x1=x1, roi_y1=y1, roi_x2=x2, roi_y2=y2
             )
-
-
-
             # -----------------------------
             # DISPLAY FRAME
             # -----------------------------
@@ -111,7 +102,6 @@ def process_video(uploaded_file):
                 channels="RGB"
             )
             
-
             if violations:
                 with violation_placeholder.container():
                     show_violations(violations, "RGB")
@@ -123,7 +113,7 @@ def process_video(uploaded_file):
 def select_roi(cap):
     # 1. Get a sample frame for the preview
     ret, frame = cap.read()
-    frame = cv2.resize(frame, (1280,720))
+    #frame = cv2.resize(frame, (1280,720))
     if not ret:
         st.error("Failed to load video preview.")
         return None
@@ -133,12 +123,8 @@ def select_roi(cap):
     
     st.subheader("📐 Adjust Detection Zone")
     
-    # 2. Create Two Columns for Sliders
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        x_range = st.slider("Horizontal Range (X)", 1, width, (0, width // 2))
-        y_range = st.slider("Vertical Range (Y)", 1, height, (height // 2, height))
+    x_range = st.slider("Horizontal Range (X)", 1, width, (0, width // 2))
+    y_range = st.slider("Vertical Range (Y)", 1, height, (height // 2, height))
         
     confirm = st.button("✅ Confirm")
 
@@ -155,7 +141,7 @@ def select_roi(cap):
     cv2.putText(preview_frame, "DETECTION ZONE", (x1 + 10, y1 + 35), 
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
 
-    st.image(cv2.cvtColor(preview_frame, cv2.COLOR_BGR2RGB),)
+    st.image(cv2.cvtColor(preview_frame, cv2.COLOR_BGR2RGB), width=600)
 
     if confirm:
         st.session_state.roi_coords = (x1, y1, x2, y2)
