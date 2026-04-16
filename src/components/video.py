@@ -6,19 +6,25 @@ from models.detect import annotate_image
 from components.violations import show_violations
 from models.loader import load_models
 from PIL import Image
+from utils.image import preprocess_img
 
 def process_video(uploaded_file):
     if "roi_coords" not in st.session_state:
         st.session_state.roi_coords = None
 
 
-    # Load model once per run (no session_state)
     model = load_models()
 
     # Confidence slider
-    conf_filter = st.slider(
+    conf_filter = st.sidebar.slider(
         "Set Confidence Filter",
         0.10, 1.00, 0.30, 0.01
+    )
+
+    (v_width, v_height) = st.sidebar.selectbox(
+        "Resolution",
+        options=[(1280, 720), (1920, 1080), (800, 600)],
+        format_func=lambda x: f"{x[0]}x{x[1]}"
     )
 
     # -----------------------------
@@ -54,7 +60,7 @@ def process_video(uploaded_file):
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     
     if st.session_state.roi_coords is None:
-        select_roi(cap)
+        select_roi(cap, v_width, v_height)
         return 
 
     x1, y1, x2, y2 = st.session_state.roi_coords
@@ -70,13 +76,12 @@ def process_video(uploaded_file):
             ret, frame = cap.read()
             if not ret:
                 break
-
-            #frame = cv2.resize(frame, (1280, 720))
+            frame = cv2.resize(frame, (v_width, v_height))
             # -----------------------------
             # TRACKING (ByteTrack)
             # -----------------------------
             results = model.track(
-                frame[y1:y2, x1:x2],
+                preprocess_img(frame[y1:y2, x1:x2]),
                 persist=True,
                 conf=conf_filter,
                 classes=[0, 1, 2, 3],
@@ -110,10 +115,10 @@ def process_video(uploaded_file):
     
 
 
-def select_roi(cap):
+def select_roi(cap, v_width, v_height):
     # 1. Get a sample frame for the preview
     ret, frame = cap.read()
-    #frame = cv2.resize(frame, (1280,720))
+    frame = cv2.resize(frame, (v_width, v_height))
     if not ret:
         st.error("Failed to load video preview.")
         return None
@@ -133,7 +138,6 @@ def select_roi(cap):
     y1, y2 = y_range
 
     # 4. Live Preview
-    # Draw the rectangle on a copy of the frame
     preview_frame = frame.copy()
     cv2.rectangle(preview_frame, (x1, y1), (x2, y2), (0, 255, 0), 5)
     

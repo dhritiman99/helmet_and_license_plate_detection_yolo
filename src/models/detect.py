@@ -12,9 +12,9 @@ ID_NO_HELMET = 2
 ID_PLATE = 3
 
 CUSTOM_COLOR_LOOKUP = {
-    0: sv.Color(r=0, g=0, b=255),     # helmet
+    0: sv.Color(r=255, g=0, b=0),     # helmet
     1: sv.Color.WHITE,                # motorcyclist
-    2: sv.Color(r=255, g=0, b=0),     # no-helmet
+    2: sv.Color(r=0, g=0, b=255),     # no-helmet
     3: sv.Color.GREEN                 # plate
 }
 
