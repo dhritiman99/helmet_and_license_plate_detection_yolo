@@ -21,6 +21,13 @@ def process_video(uploaded_file):
         0.10, 1.00, 0.30, 0.01
     )
 
+    skip_frames = st.sidebar.slider(
+        "Skip Frames",
+        1, 20,
+        3,
+        1
+    )
+
     (v_width, v_height) = st.sidebar.selectbox(
         "Resolution",
         options=[(1280, 720), (1920, 1080), (800, 600)],
@@ -68,6 +75,7 @@ def process_video(uploaded_file):
     # VIDEO PROCESSING
     # -----------------------------
     if run:
+        frame_index = 0
         while cap.isOpened():
 
             if stop:
@@ -76,40 +84,43 @@ def process_video(uploaded_file):
             ret, frame = cap.read()
             if not ret:
                 break
-            frame = cv2.resize(frame, (v_width, v_height))
-            # -----------------------------
-            # TRACKING (ByteTrack)
-            # -----------------------------
-            results = model.track(
-                preprocess_img(frame[y1:y2, x1:x2]),
-                persist=True,
-                conf=conf_filter,
-                classes=[0, 1, 2, 3],
-                verbose=False
-            )
+            if frame_index % skip_frames == 0:
+                frame = cv2.resize(frame, (v_width, v_height))
+                # -----------------------------
+                # TRACKING (ByteTrack)
+                # -----------------------------
+                results = model.track(
+                    preprocess_img(frame[y1:y2, x1:x2]),
+                    persist=True,
+                    conf=conf_filter,
+                    classes=[0, 1, 2, 3],
+                    verbose=False
+                )
 
-            detections = results[0]
+                detections = results[0]
 
-            # -----------------------------
-            # ANNOTATION + VIOLATIONS
-            # -----------------------------
-            annotated_frame, violations = annotate_image(
-                frame,
-                detections,
-                violations,
-                roi_x1=x1, roi_y1=y1, roi_x2=x2, roi_y2=y2
-            )
-            # -----------------------------
-            # DISPLAY FRAME
-            # -----------------------------
-            frame_placeholder.image(
-                annotated_frame,
-                channels="RGB"
-            )
-            
-            if violations:
-                with violation_placeholder.container():
-                    show_violations(violations, "RGB")
+                # -----------------------------
+                # ANNOTATION + VIOLATIONS
+                # -----------------------------
+                annotated_frame, violations = annotate_image(
+                    frame,
+                    detections,
+                    violations,
+                    roi_x1=x1, roi_y1=y1, roi_x2=x2, roi_y2=y2
+                )
+                # -----------------------------
+                # DISPLAY FRAME
+                # -----------------------------
+                frame_placeholder.image(
+                    annotated_frame,
+                    channels="RGB"
+                )
+                
+                if violations:
+                    with violation_placeholder.container():
+                        show_violations(violations, "RGB")
+            frame_index += 1
+
 
         cap.release()
     
