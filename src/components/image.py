@@ -4,6 +4,7 @@ from models.detect import detect_from_image, annotate_image
 from utils.frame import upload_to_frame
 from components.violations import show_violations
 from utils.plate_ocr import detect_no_plate_text
+import cv2
 
 def process_image(upload):
 
@@ -24,11 +25,14 @@ def process_image(upload):
     frame_placeholder.image(upload)
     
     if detect_button_pressed:
-        with frame_placeholder.spinner():
+        with st.spinner(text="Detecting"):
+            frame_placeholder.empty()
+            
             frame = upload_to_frame(upload)
             detections = detect_from_image(frame, conf_filter)
             annotated_frame, violations = annotate_image(frame, detections)
             for id in violations.keys(): 
+                cv2.imwrite('debug.jpg',violations[id]['plate_img'])
                 text = detect_no_plate_text(violations[id]['plate_img'])
                 violations[id]['plate_txt'] = text
             

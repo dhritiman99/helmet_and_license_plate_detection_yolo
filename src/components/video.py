@@ -7,6 +7,7 @@ from components.violations import show_violations
 from models.loader import load_models
 from PIL import Image
 from utils.image import preprocess_img
+from utils.plate_ocr import detect_no_plate_text
 
 def process_video(uploaded_file):
     if "roi_coords" not in st.session_state:
@@ -15,7 +16,6 @@ def process_video(uploaded_file):
 
     model = load_models()
 
-    # Confidence slider
     conf_filter = st.sidebar.slider(
         "Set Confidence Filter",
         0.10, 1.00, 0.30, 0.01
@@ -115,6 +115,10 @@ def process_video(uploaded_file):
                     annotated_frame,
                     channels="RGB"
                 )
+
+                for id in violations.keys(): 
+                    text = detect_no_plate_text(violations[id]['plate_img'])
+                    violations[id]['plate_txt'] = text
                 
                 if violations:
                     with violation_placeholder.container():
