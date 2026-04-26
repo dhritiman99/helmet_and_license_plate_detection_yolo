@@ -10,6 +10,8 @@ def buffer_to_img(buffer):
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img
 
+def img_np_to_bytes(img: numpy.ndarray):
+    return numpy.ndarray.tobytes(img)
 
 def preprocess_img(image):
     """

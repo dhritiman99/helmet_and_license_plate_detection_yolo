@@ -17,6 +17,6 @@ def detect_no_plate_text(image):
         
     text_parts = [res[1] for res in ocr_res]
 
-    full_text = "".join(text_parts)
+    full_text = "".join(text_parts).replace(" ","")
     
     return full_text.upper().strip()
