@@ -22,7 +22,7 @@ violations = st.Page(
     title="Violations"
 )
 
-nav_pages = [login,home, violations]
+nav_pages = [login, home, violations]
 
 
 st.logo('static/logo.png', size="large")

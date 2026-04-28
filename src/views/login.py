@@ -3,6 +3,8 @@ from db.schemas.user import add_user,login_user
 from streamlit_redirect import redirect
 
 def login():
+    if "logged_user" not in st.session_state:
+        st.session_state.logged_user = None
     if st.session_state.logged_user is not None:
         st.switch_page('views/home.py')
     
