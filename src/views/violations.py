@@ -1,7 +1,11 @@
 import streamlit as st
 from db.schemas.violation import get_violations, del_violation
 
-st.text("Violations")
+
+if  st.session_state.logged_user is None:
+    st.switch_page('views/login.py')
+
+st.title("Violations")
 violations = get_violations()
 
 

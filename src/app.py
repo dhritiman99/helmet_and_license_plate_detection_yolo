@@ -8,6 +8,10 @@ init_db()
 if "logged_user" not in st.session_state:
     st.session_state.logged_user = None
 
+login = st.Page(
+    page="views/login.py",
+    title="Log In"    
+)
 home = st.Page(
     page="views/home.py",
     title="Home",
@@ -18,10 +22,13 @@ violations = st.Page(
     title="Violations"
 )
 
-if not st.session_state.logged_user:
-    login()
-else:
-    st.logo('static/logo.jpg')
-    st.sidebar.text('Helmet, License Plate Detection')
-    page = st.navigation(pages=[home, violations])
-    page.run()
+nav_pages = [login,home, violations]
+
+
+st.logo('static/logo.png', size="large")
+st.sidebar.text('Helmet, License Plate Detection')
+if st.sidebar.button("Log Out"):
+    st.session_state.logged_user = None
+    st.switch_page("views/home.py") 
+page = st.navigation(pages=nav_pages,position="sidebar")
+page.run()

@@ -5,7 +5,6 @@ from db.schemas.violation import add_violation
 
 
 def show_violations(violations: dict, img_channel="BGR"):
-
     st.title('Detected Violations')
     for violation_id in violations:
         add_violation(

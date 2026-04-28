@@ -87,7 +87,7 @@ def process_video(uploaded_file):
             if frame_index % skip_frames == 0:
                 frame = cv2.resize(frame, (v_width, v_height))
                 # -----------------------------
-                # TRACKING (ByteTrack)
+                # TRACKING
                 # -----------------------------
                 results = model.track(
                     preprocess_img(frame[y1:y2, x1:x2]),

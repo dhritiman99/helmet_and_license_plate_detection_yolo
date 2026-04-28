@@ -17,8 +17,26 @@ def process_image(upload):
         step=0.01,
     )
     detect_button_pressed = st.sidebar.button("Detect")
+    st.markdown("""
+    <style>
+     .frame_cont img{
+        height: 400px !important;
+        object-fit: contain;
+     }
+    </style>
+    """,unsafe_allow_html=True)
     with st.container(height=400):
+        st.markdown(
+            """
+            <div class="frame_cont">
+            """,unsafe_allow_html=True
+        )
         frame_placeholder = st.empty()
+        st.markdown(
+            """
+            </div>
+            """,unsafe_allow_html=True
+        )
 
     temp_file = tempfile.NamedTemporaryFile(delete=False)
     temp_file.write(upload.read())
@@ -33,7 +51,6 @@ def process_image(upload):
             detections = detect_from_image(frame, conf_filter)
             annotated_frame, violations = annotate_image(frame, detections)
             for id in violations.keys(): 
-                cv2.imwrite('debug.jpg',buffer_to_img(violations[id]['plate_img']))
                 text = detect_no_plate_text(violations[id]['plate_img'])
                 violations[id]['plate_txt'] = text
             
