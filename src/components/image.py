@@ -6,6 +6,7 @@ from components.violations import show_violations
 from utils.plate_ocr import detect_no_plate_text
 import cv2
 from utils.image import buffer_to_img
+from db.schemas.violation import add_violations
 
 def process_image(upload):
 
@@ -46,7 +47,6 @@ def process_image(upload):
     if detect_button_pressed:
         with st.spinner(text="Detecting"):
             frame_placeholder.empty()
-            
             frame = upload_to_frame(upload)
             detections = detect_from_image(frame, conf_filter)
             annotated_frame, violations = annotate_image(frame, detections)
@@ -56,3 +56,4 @@ def process_image(upload):
             
             show_violations(violations)
             frame_placeholder.image(annotated_frame, channels="BGR")
+            add_violations(violations)

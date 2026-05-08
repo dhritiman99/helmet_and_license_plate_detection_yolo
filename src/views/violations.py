@@ -2,12 +2,12 @@ import streamlit as st
 from db.schemas.violation import get_violations, del_violation
 
 
-if  st.session_state.logged_user is None:
-    st.switch_page('views/login.py')
 
 st.title("Violations")
 violations = get_violations()
 
+if len(violations) == 0:
+    st.text("No Violations found...")
 
 for violation in violations:
     with st.container(

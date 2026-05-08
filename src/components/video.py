@@ -1,18 +1,17 @@
 import streamlit as st
 import tempfile
 import cv2
-from streamlit_drawable_canvas import st_canvas
 from models.detect import annotate_image
 from components.violations import show_violations
 from models.loader import load_models
 from PIL import Image
 from utils.image import preprocess_img
 from utils.plate_ocr import detect_no_plate_text
+from db.schemas.violation import add_violations
 
 def process_video(uploaded_file):
     if "roi_coords" not in st.session_state:
         st.session_state.roi_coords = None
-
 
     model = load_models()
 
@@ -34,9 +33,8 @@ def process_video(uploaded_file):
         format_func=lambda x: f"{x[0]}x{x[1]}"
     )
 
-    # -----------------------------
+
     # UPLOAD HANDLING
-    # -----------------------------
     if uploaded_file is None:
         st.warning("Please upload a video.")
         return
@@ -45,16 +43,15 @@ def process_video(uploaded_file):
     tfile.write(uploaded_file.read())
     video_path = tfile.name
 
-    # -----------------------------
+
     # CONTROL BUTTONS (LOCAL STATE)
-    # -----------------------------
     c1, c2, c3 = st.columns(3)
     with c1:
         run = st.button("▶ Start Video")
     with c2:
         stop = st.button("⏹ Stop Video")
     with c3:
-        if st.button("🔄 Reset"):
+        if st.button("Reset"):
             st.session_state.clear()
             st.rerun()
     
@@ -71,9 +68,8 @@ def process_video(uploaded_file):
         return 
 
     x1, y1, x2, y2 = st.session_state.roi_coords
-    # -----------------------------
+
     # VIDEO PROCESSING
-    # -----------------------------
     if run:
         frame_index = 0
         while cap.isOpened():
@@ -86,9 +82,7 @@ def process_video(uploaded_file):
                 break
             if frame_index % skip_frames == 0:
                 frame = cv2.resize(frame, (v_width, v_height))
-                # -----------------------------
                 # TRACKING
-                # -----------------------------
                 results = model.track(
                     preprocess_img(frame[y1:y2, x1:x2]),
                     persist=True,
@@ -99,21 +93,17 @@ def process_video(uploaded_file):
 
                 detections = results[0]
 
-                # -----------------------------
                 # ANNOTATION + VIOLATIONS
-                # -----------------------------
                 annotated_frame, violations = annotate_image(
-                    frame,
+                    cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
                     detections,
                     violations,
                     roi_x1=x1, roi_y1=y1, roi_x2=x2, roi_y2=y2
                 )
-                # -----------------------------
                 # DISPLAY FRAME
-                # -----------------------------
                 frame_placeholder.image(
                     annotated_frame,
-                    channels="RGB"
+                    channels="BGR"
                 )
 
                 for id in violations.keys(): 
@@ -122,11 +112,11 @@ def process_video(uploaded_file):
                 
                 if violations:
                     with violation_placeholder.container():
-                        show_violations(violations, "RGB")
+                        show_violations(violations, "BGR")
             frame_index += 1
-
-
         cap.release()
+        with st.spinner("saving violations..."):
+            add_violations(violations)
     
 
 
@@ -140,14 +130,10 @@ def select_roi(cap, v_width, v_height):
     
     # Get video dimensions
     height, width, _ = frame.shape
-    
-    st.subheader("📐 Adjust Detection Zone")
-    
-    x_range = st.slider("Horizontal Range (X)", 1, width, (0, width // 2))
-    y_range = st.slider("Vertical Range (Y)", 1, height, (height // 2, height))
-        
-    confirm = st.button("✅ Confirm")
-
+    st.subheader("Adjust Detection Zone")
+    x_range = st.slider("Horizontal Range (X)", 1, width, (0, width))
+    y_range = st.slider("Vertical Range (Y)", 1, height, (0, height))
+    confirm = st.button("Confirm")
     # 3. Extract coordinates
     x1, x2 = x_range
     y1, y2 = y_range

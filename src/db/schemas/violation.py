@@ -1,6 +1,8 @@
 from db.schemas.base import Base
 from sqlalchemy import Column, Integer, String, BLOB
 from db.connect import get_db
+from utils.image import img_np_to_bytes
+
 
 class Violation(Base):
     __tablename__="violations"
@@ -24,6 +26,15 @@ def add_violation(rider_img, plate_img, plate_txt=""):
         except Exception as e:
             print(e)
             s.rollback()
+
+def add_violations(violations: dict) -> None:
+    for violation_id in violations:
+        add_violation(
+                rider_img=img_np_to_bytes(violations[violation_id]['rider_img']),
+                plate_img=img_np_to_bytes(violations[violation_id]['plate_img']),
+                plate_txt=violations[violation_id]['plate_txt']
+            )
+    return None
 
 def get_violations():
     s = next(get_db())

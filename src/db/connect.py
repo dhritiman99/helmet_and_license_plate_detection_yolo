@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 @st.cache_resource
 def get_engine():
+    print()
     engine = create_engine('sqlite:///src/db/helmet_lp_db.sqlite3')
     return engine
 
